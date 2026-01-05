@@ -246,5 +246,12 @@ dist
 
 # Custom
 .vscode/
+*.code-workspace
+buildrun.sh
+pull.sh
+commands.txt
+here.code-workspace
+backups/
+config/
 data/
 /notes/
