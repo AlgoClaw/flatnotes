@@ -90,19 +90,47 @@
 
     <!-- Content -->
     <div class="flex-1">
-      <ToastViewer
-        v-if="!editMode"
-        :initialValue="note.content"
-        class="toast-viewer pb-4"
-      />
+      <div v-if="!editMode" class="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <aside
+          v-if="shouldRenderTableOfContents"
+          class="table-of-contents mb-4 rounded border border-theme-border bg-theme-background-elevated px-4 py-3 text-sm text-theme-text shadow-sm lg:sticky lg:top-4 lg:mb-0 lg:w-72 lg:self-start"
+        >
+          <div class="text-xs font-semibold uppercase tracking-wide text-theme-text-muted">
+            On this page
+          </div>
+          <nav
+            class="mt-3 flex flex-col text-theme-text"
+            aria-label="Table of contents"
+          >
+            <a
+              v-for="item in tableOfContents"
+              :key="item.id"
+              class="rounded px-2 py-1 text-sm transition-colors hover:bg-theme-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-brand"
+              :href="`${currentNoteLinkBase}#${item.id}`"
+              :style="{ paddingLeft: `${(item.level - 1) * 12}px` }"
+            >
+              {{ item.text }}
+            </a>
+          </nav>
+        </aside>
+
+        <div class="min-w-0 flex-1">
+          <ToastViewer
+            :initialValue="note.content"
+            :class="toastViewerClasses"
+            @tocGenerated="handleTocGenerated"
+          />
+        </div>
+      </div>
+
       <ToastEditor
-        v-if="editMode"
+        v-else
         ref="toastEditor"
         :initialValue="getInitialEditorValue()"
         :initialEditType="loadDefaultEditorMode()"
         :addImageBlobHook="addImageBlobHook"
         @change="startContentChangedTimeout"
-        @keydown="keydownHandler"
+        @keydown.capture="keydownHandler"
       />
     </div>
   </LoadingIndicator>
@@ -167,6 +195,44 @@ const router = useRouter();
 const newTitle = ref();
 const toast = useToast();
 const toastEditor = ref();
+const tableOfContents = ref([]);
+const currentNoteLinkBase = computed(() => {
+  const fullPath = router.currentRoute.value.fullPath || "/";
+  return fullPath.split("#")[0];
+});
+const shouldDisplayTableOfContentsSetting = computed(() => {
+  const value = globalStore.settings.displayTableOfContents;
+  return value === undefined ? true : value;
+});
+const shouldRenderTableOfContents = computed(
+  () =>
+    shouldDisplayTableOfContentsSetting.value &&
+    tableOfContents.value.length > 0,
+);
+const ctrlSSavesNote = computed(
+  () => globalStore.settings.ctrlSSavesNote === true,
+);
+const justifyNoteText = computed(
+  () => globalStore.settings.justifyNoteText === true,
+);
+const standardParagraphSpacing = computed(
+  () => globalStore.settings.standardParagraphSpacing === true,
+);
+const bulletListSpacing = computed(
+  () => globalStore.settings.bulletListSpacing === true,
+);
+const numberedListSpacing = computed(
+  () => globalStore.settings.numberedListSpacing === true,
+);
+const toastViewerClasses = computed(() => {
+  const classes = ["toast-viewer", "pb-4"];
+  if (justifyNoteText.value) classes.push("setting-justify-text");
+  if (standardParagraphSpacing.value)
+    classes.push("setting-paragraph-spacing");
+  if (bulletListSpacing.value) classes.push("setting-bullet-spacing");
+  if (numberedListSpacing.value) classes.push("setting-numbered-spacing");
+  return classes;
+});
 const unsavedChanges = ref(false);
 
 function init() {
@@ -463,6 +529,11 @@ function loadDraft() {
   return localDraft || sessionDraft;
 }
 
+// Table of Contents
+function handleTocGenerated(entries = []) {
+  tableOfContents.value = entries;
+}
+
 // Keyboard Shortcuts
 // 'e' to edit
 Mousetrap.bind("e", () => {
@@ -471,7 +542,26 @@ Mousetrap.bind("e", () => {
   }
 });
 
+function swallowEvent(event) {
+  if (event.preventDefault) {
+    event.preventDefault();
+  }
+  if (event.stopPropagation) {
+    event.stopPropagation();
+  }
+  if (event.stopImmediatePropagation) {
+    event.stopImmediatePropagation();
+  }
+}
+
 function keydownHandler(event) {
+  if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === "s") {
+    if (ctrlSSavesNote.value) {
+      swallowEvent(event);
+      saveHandler((close = false));
+      return;
+    }
+  }
   // Ctrl + Enter to save
   if ((event.ctrlKey || event.metaKey) && event.key == "Enter") {
     saveHandler((close = false));

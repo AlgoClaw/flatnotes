@@ -1,7 +1,11 @@
 <template>
   <Menu ref="menu" :pt="style">
     <template #item="{ item, props }">
-      <a class="flex items-center justify-between" v-bind="props.action">
+      <a
+        class="flex items-center justify-between"
+        v-bind="props.action"
+        @click="handleItemClick($event, item, props)"
+      >
         <IconLabel :iconPath="item.icon" :label="item.label" />
         <span
           v-if="item.keyboardShortcut"
@@ -15,10 +19,12 @@
 <script setup>
 import Menu from "primevue/menu";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
 import IconLabel from "./IconLabel.vue";
 
 const menu = ref();
+const router = useRouter();
 
 const style = {
   root: "border p-1 rounded border-theme-border bg-theme-background",
@@ -36,6 +42,19 @@ const style = {
 
 function toggle(event) {
   menu.value.toggle(event);
+}
+
+function hide() {
+  menu.value.hide();
+}
+
+function handleItemClick(event, item) {
+  if (!item?.to) {
+    return;
+  }
+  event.preventDefault();
+  router.push(item.to);
+  hide();
 }
 
 defineExpose({ toggle });

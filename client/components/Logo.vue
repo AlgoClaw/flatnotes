@@ -1,6 +1,7 @@
 <template>
   <div class="flex items-center">
     <svg
+      v-if="showLogoMark"
       width="36"
       height="36"
       viewBox="0 0 36 36"
@@ -15,6 +16,7 @@
       />
     </svg>
     <svg
+      v-if="showLogoWordmark"
       width="149"
       height="29"
       viewBox="0 0 149 29"
@@ -32,10 +34,20 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
+
+import { useGlobalStore } from "../globalStore.js";
+
 const props = defineProps({
   responsive: {
     type: Boolean,
     default: false,
   },
 });
+
+const globalStore = useGlobalStore();
+const showLogoMark = computed(() => globalStore.settings.hideLogoMark !== true);
+const showLogoWordmark = computed(
+  () => globalStore.settings.hideLogoWordmark !== true,
+);
 </script>

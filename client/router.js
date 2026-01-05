@@ -30,6 +30,11 @@ const router = createRouter({
       component: () => import("./views/Note.vue"),
     },
     {
+      path: "/settings",
+      name: "settings",
+      component: () => import("./views/Settings.vue"),
+    },
+    {
       path: "/search",
       name: "search",
       component: () => import("./views/SearchResults.vue"),
@@ -60,18 +65,6 @@ router.beforeEach(async (to) => {
   } finally {
     authChecked = true;
   }
-});
-
-router.afterEach((to) => {
-  let title = "flatnotes";
-  if (to.name === "note") {
-    if (to.params.title) {
-      title = `${to.params.title} - ${title}`;
-    } else {
-      title = "New Note - " + title;
-    }
-  }
-  document.title = title;
 });
 
 export default router;

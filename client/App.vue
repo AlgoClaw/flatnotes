@@ -1,7 +1,7 @@
 <template>
   <LoadingIndicator
     ref="loadingIndicator"
-    class="container mx-auto flex h-screen flex-col px-2 py-4 print:max-w-full"
+    :class="appContainerClasses"
   >
     <PrimeToast />
     <SearchModal v-model="isSearchModalVisible" />
@@ -20,11 +20,12 @@
 import Mousetrap from "mousetrap";
 import "mousetrap/plugins/global-bind/mousetrap-global-bind";
 import { useToast } from "primevue/usetoast";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 
-import { apiErrorHandler, getConfig } from "./api.js";
+import { apiErrorHandler, getConfig, getSettings } from "./api.js";
 import PrimeToast from "./components/PrimeToast.vue";
+import { defaultSiteTitle } from "./constants.js";
 import { useGlobalStore } from "./globalStore.js";
 import { loadTheme } from "./helpers.js";
 import NavBar from "./partials/NavBar.vue";
@@ -63,15 +64,48 @@ Mousetrap.bindGlobal("ctrl+alt+h", () => {
   }
 });
 
-getConfig()
-  .then((data) => {
-    globalStore.config = data;
+const defaultSettings = {
+  displayTableOfContents: true,
+  siteTitle: defaultSiteTitle,
+  ctrlSSavesNote: false,
+  compactHeader: false,
+  wideLayout: false,
+  hideLogoMark: false,
+  hideLogoWordmark: false,
+  hideSiteIcon: false,
+  compactSearchResults: false,
+  hideSearchTags: false,
+  justifyNoteText: false,
+  standardParagraphSpacing: false,
+  bulletListSpacing: false,
+  numberedListSpacing: false,
+};
+
+Promise.all([
+  getConfig(),
+  getSettings().catch((error) => {
+    console.error("Failed to load settings. Using defaults.", error);
+    return {};
+  }),
+])
+  .then(([configData, settingsData]) => {
+    globalStore.config = configData;
+    globalStore.settings = {
+      ...defaultSettings,
+      ...settingsData,
+    };
     loadingIndicator.value.setLoaded();
+    updateDocumentTitle();
   })
   .catch((error) => {
     apiErrorHandler(error, toast);
     loadingIndicator.value.setFailed();
   });
+
+watch(
+  () => [route.name, route.params.title, globalStore.settings.siteTitle],
+  () => updateDocumentTitle(),
+);
 
 const showNavBar = computed(() => {
   return route.name !== "login";
@@ -80,6 +114,95 @@ const showNavBar = computed(() => {
 const showNavBarLogo = computed(() => {
   return route.name !== "home";
 });
+
+const wideLayout = computed(() => globalStore.settings.wideLayout === true);
+const hideSiteIconSetting = computed(
+  () => globalStore.settings.hideSiteIcon === true,
+);
+
+const appContainerClasses = computed(() => [
+  "container mx-auto flex min-h-screen flex-col px-2 py-4 print:max-w-full",
+  wideLayout.value ? "md:max-w-[80vw]" : "",
+]);
+
+watch(
+  () => hideSiteIconSetting.value,
+  (hide) => updateSiteIconVisibility(!hide),
+  { immediate: true },
+);
+
+function getSiteTitle() {
+  const rawTitle = globalStore.settings.siteTitle;
+  if (typeof rawTitle !== "string") {
+    return defaultSiteTitle;
+  }
+  const trimmed = rawTitle.trim();
+  return trimmed.length ? trimmed : defaultSiteTitle;
+}
+
+function updateDocumentTitle() {
+  const baseTitle = getSiteTitle();
+  if (route.name === "note") {
+    if (route.params.title) {
+      document.title = `${route.params.title} - ${baseTitle}`;
+      return;
+    }
+    document.title = `New Note - ${baseTitle}`;
+    return;
+  }
+  if (route.name === "settings") {
+    document.title = `Settings - ${baseTitle}`;
+    return;
+  }
+  document.title = baseTitle;
+}
+
+const defaultIconLinks = [];
+const blankIconHref = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+
+function cacheDefaultIconLinks() {
+  if (defaultIconLinks.length) {
+    return;
+  }
+  document
+    .querySelectorAll('link[rel*="icon"], link[rel="shortcut icon"]')
+    .forEach((link) => {
+      defaultIconLinks.push({
+        rel: link.getAttribute("rel"),
+        href: link.getAttribute("href"),
+        sizes: link.getAttribute("sizes"),
+        type: link.getAttribute("type"),
+      });
+    });
+}
+
+function updateSiteIconVisibility(shouldShow) {
+  cacheDefaultIconLinks();
+  const selector = 'link[rel*="icon"], link[rel="shortcut icon"]';
+  document.querySelectorAll(selector).forEach((link) => link.remove());
+  if (!shouldShow) {
+    const blankLink = document.createElement("link");
+    blankLink.setAttribute("rel", "icon");
+    blankLink.setAttribute("href", blankIconHref);
+    document.head.appendChild(blankLink);
+    return;
+  }
+  const head = document.head;
+  defaultIconLinks.forEach((data) => {
+    const link = document.createElement("link");
+    link.setAttribute("rel", data.rel ?? "icon");
+    if (data.href) {
+      link.setAttribute("href", data.href);
+    }
+    if (data.sizes) {
+      link.setAttribute("sizes", data.sizes);
+    }
+    if (data.type) {
+      link.setAttribute("type", data.type);
+    }
+    head.appendChild(link);
+  });
+}
 
 function toggleSearchModal() {
   isSearchModalVisible.value = !isSearchModalVisible.value;

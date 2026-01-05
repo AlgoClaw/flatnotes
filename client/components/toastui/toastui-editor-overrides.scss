@@ -200,6 +200,24 @@
   border-bottom: none;
 }
 
+.toast-viewer.setting-justify-text .toastui-editor-contents {
+  text-align: justify;
+}
+
+.toast-viewer.setting-paragraph-spacing .toastui-editor-contents p {
+  margin: 1rem 0 0;
+}
+
+.toast-viewer.setting-bullet-spacing .toastui-editor-contents ul {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.toast-viewer.setting-numbered-spacing .toastui-editor-contents ol {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
 .toastui-editor-toolbar-divider {
   background-color: rgb(var(--theme-text));
 }

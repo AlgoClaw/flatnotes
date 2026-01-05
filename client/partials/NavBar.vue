@@ -1,5 +1,5 @@
 <template>
-  <nav class="mb-2 flex justify-between align-top md:mb-12">
+  <nav :class="['mb-2 flex justify-between align-top', compactHeader ? 'md:mb-2' : 'md:mb-12']">
     <RouterLink :to="{ name: 'home' }" v-if="!hideLogo">
       <Logo responsive></Logo>
     </RouterLink>
@@ -28,6 +28,7 @@ import {
   mdilMonitor,
   mdilNoteMultiple,
   mdilPlusCircle,
+  mdilSettings,
 } from "@mdi/light-js";
 import { computed, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
@@ -43,6 +44,7 @@ import { clearStoredToken } from "../tokenStorage.js";
 const globalStore = useGlobalStore();
 const menu = ref();
 const router = useRouter();
+const compactHeader = computed(() => globalStore.settings.compactHeader === true);
 
 defineProps({
   hideLogo: Boolean,
@@ -75,6 +77,12 @@ const menuItems = [
     command: toggleTheme,
   },
   {
+    label: "Settings",
+    icon: mdilSettings,
+    to: { name: "settings" },
+    visible: showSettings,
+  },
+  {
     separator: true,
     visible: showLogOutButton,
   },
@@ -101,6 +109,12 @@ function toggleMenu(event) {
 }
 
 function showLogOutButton() {
-  return ![authTypes.none, authTypes.readOnly].includes(globalStore.config.authType);
+  return ![authTypes.none, authTypes.readOnly].includes(
+    globalStore.config.authType,
+  );
+}
+
+function showSettings() {
+  return globalStore.config.authType !== authTypes.readOnly;
 }
 </script>

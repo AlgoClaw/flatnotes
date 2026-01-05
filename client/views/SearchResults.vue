@@ -18,13 +18,24 @@
       <!-- Search Results -->
       <div
         v-for="result in results"
-        class="mb-4 cursor-pointer rounded px-2 py-1 hover:bg-theme-background-elevated"
+        :key="result.title + result.lastModified"
+        :class="[
+          'cursor-pointer rounded px-2 py-1 hover:bg-theme-background-elevated',
+          compactSearchResults ? 'mb-0' : 'mb-4',
+        ]"
       >
         <RouterLink :to="{ name: 'note', params: { title: result.title } }">
           <!-- Title and Tags -->
           <div>
             <span v-html="result.titleHighlightsOrTitle" class="mr-2"></span>
-            <Tag v-for="tag in result.tagMatches" :tag="tag" class="mr-1" />
+            <template v-if="!hideSearchTags">
+              <Tag
+                v-for="tag in result.tagMatches"
+                :key="`${result.title}-${tag}`"
+                :tag="tag"
+                class="mr-1"
+              />
+            </template>
           </div>
           <!-- Last Modified and Content Highlights -->
           <div>
@@ -56,6 +67,7 @@ import PrimeMenu from "../components/PrimeMenu.vue";
 import Tag from "../components/Tag.vue";
 import { params, searchSortOptions } from "../constants.js";
 import SearchInput from "../partials/SearchInput.vue";
+import { useGlobalStore } from "../globalStore.js";
 
 const props = defineProps({
   searchTerm: String,
@@ -70,6 +82,14 @@ const results = ref([]);
 const router = useRouter();
 const sortMenu = ref();
 const toast = useToast();
+const globalStore = useGlobalStore();
+
+const compactSearchResults = computed(
+  () => globalStore.settings.compactSearchResults === true,
+);
+const hideSearchTags = computed(
+  () => globalStore.settings.hideSearchTags === true,
+);
 
 const sortByName = computed(() => {
   const sortOptionNames = {

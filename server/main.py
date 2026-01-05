@@ -13,11 +13,17 @@ from global_config import AuthType, GlobalConfig, GlobalConfigResponseModel
 from helpers import replace_base_href
 from notes.base import BaseNotes
 from notes.models import Note, NoteCreate, NoteUpdate, SearchResult
+from settings_manager import (
+    SettingsManager,
+    SettingsModel,
+    SettingsUpdateModel,
+)
 
 global_config = GlobalConfig()
 auth: BaseAuth = global_config.load_auth()
 note_storage: BaseNotes = global_config.load_note_storage()
 attachment_storage: BaseAttachments = global_config.load_attachment_storage()
+settings_manager = SettingsManager()
 auth_deps = [Depends(auth.authenticate)] if auth else []
 router = APIRouter()
 app = FastAPI(
@@ -33,6 +39,7 @@ replace_base_href("client/dist/index.html", global_config.path_prefix)
 @router.get("/search", include_in_schema=False)
 @router.get("/new", include_in_schema=False)
 @router.get("/note/{title}", include_in_schema=False)
+@router.get("/settings", include_in_schema=False)
 def root(title: str = ""):
     with open("client/dist/index.html", "r", encoding="utf-8") as f:
         html = f.read()
@@ -191,6 +198,37 @@ def get_config():
         quick_access_sort=global_config.quick_access_sort,
         quick_access_limit=global_config.quick_access_limit,
     )
+
+
+# endregion
+
+
+# region Settings
+@router.get("/api/settings", response_model=SettingsModel)
+def get_settings():
+    """Return persisted UI settings."""
+    return settings_manager.load()
+
+
+@router.put(
+    "/api/settings",
+    dependencies=auth_deps,
+    response_model=SettingsModel,
+)
+def put_settings(data: SettingsUpdateModel):
+    """Persist UI settings to disk."""
+    if global_config.auth_type == AuthType.READ_ONLY:
+        raise HTTPException(
+            status_code=403, detail="Settings cannot be changed in read-only mode."
+        )
+    updates = {
+        key: value
+        for key, value in data.model_dump(by_alias=False).items()
+        if value is not None
+    }
+    if not updates:
+        return settings_manager.load()
+    return settings_manager.save(updates)
 
 
 # endregion
