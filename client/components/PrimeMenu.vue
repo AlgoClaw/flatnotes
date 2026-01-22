@@ -5,6 +5,10 @@
         class="flex items-center justify-between"
         v-bind="props.action"
         @click="handleItemClick($event, item, props)"
+        :aria-disabled="item.disabled"
+        :class="{
+          'pointer-events-none cursor-default opacity-50': item.disabled,
+        }"
       >
         <IconLabel :iconPath="item.icon" :label="item.label" />
         <span
@@ -49,6 +53,10 @@ function hide() {
 }
 
 function handleItemClick(event, item) {
+  if (item?.disabled) {
+    event.preventDefault();
+    return;
+  }
   if (!item?.to) {
     return;
   }

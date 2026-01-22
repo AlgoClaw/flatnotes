@@ -1,4 +1,5 @@
 import * as constants from "./constants.js";
+import { useGlobalStore } from "./globalStore.js";
 
 import { createRouter, createWebHistory } from "vue-router";
 
@@ -49,6 +50,13 @@ const router = createRouter({
 // Check the user is authenticated on first navigation (unless going to login)
 let authChecked = false;
 router.beforeEach(async (to) => {
+  const globalStore = useGlobalStore();
+  if (
+    to.name === "settings" &&
+    globalStore.config.authType === constants.authTypes.readOnly
+  ) {
+    return { name: "home" };
+  }
   if (authChecked || to.name === "login") {
     return;
   }

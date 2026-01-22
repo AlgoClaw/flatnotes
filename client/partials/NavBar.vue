@@ -52,7 +52,14 @@ defineProps({
 
 const emit = defineEmits(["toggleSearchModal"]);
 
-const menuItems = [
+const settingsDisabled = computed(
+  () => globalStore.config.authType === authTypes.readOnly,
+);
+const showLogOutButton = computed(
+  () => ![authTypes.none, authTypes.readOnly].includes(globalStore.config.authType),
+);
+
+const menuItems = computed(() => [
   {
     label: "Search",
     icon: mdilMagnify,
@@ -80,23 +87,23 @@ const menuItems = [
     label: "Settings",
     icon: mdilSettings,
     to: { name: "settings" },
-    visible: showSettings,
+    disabled: settingsDisabled.value,
   },
   {
     separator: true,
-    visible: showLogOutButton,
+    visible: showLogOutButton.value,
   },
   {
     label: "Log Out",
     icon: mdilLogout,
     command: logOut,
-    visible: showLogOutButton,
+    visible: showLogOutButton.value,
   },
-];
+]);
 
-const showNewButton = computed(() => {
-  return globalStore.config.authType !== authTypes.readOnly;
-});
+const showNewButton = computed(
+  () => globalStore.config.authType !== authTypes.readOnly,
+);
 
 function logOut() {
   clearStoredToken();
@@ -108,13 +115,5 @@ function toggleMenu(event) {
   menu.value.toggle(event);
 }
 
-function showLogOutButton() {
-  return ![authTypes.none, authTypes.readOnly].includes(
-    globalStore.config.authType,
-  );
-}
-
-function showSettings() {
-  return globalStore.config.authType !== authTypes.readOnly;
-}
+<!-- remove functions -->
 </script>

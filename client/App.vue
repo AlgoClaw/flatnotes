@@ -25,7 +25,7 @@ import { RouterView, useRoute } from "vue-router";
 
 import { apiErrorHandler, getConfig, getSettings } from "./api.js";
 import PrimeToast from "./components/PrimeToast.vue";
-import { defaultSiteTitle } from "./constants.js";
+import { authTypes, defaultSiteTitle } from "./constants.js";
 import { useGlobalStore } from "./globalStore.js";
 import { loadTheme } from "./helpers.js";
 import NavBar from "./partials/NavBar.vue";
@@ -105,6 +105,16 @@ Promise.all([
 watch(
   () => [route.name, route.params.title, globalStore.settings.siteTitle],
   () => updateDocumentTitle(),
+);
+
+watch(
+  () => [route.name, globalStore.config.authType],
+  ([routeName, authType]) => {
+    if (routeName === "settings" && authType === authTypes.readOnly) {
+      router.replace({ name: "home" });
+    }
+  },
+  { immediate: true },
 );
 
 const showNavBar = computed(() => {
