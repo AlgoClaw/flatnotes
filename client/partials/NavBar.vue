@@ -111,8 +111,8 @@ function logOut() {
   router.push({ name: "login" });
 }
 
-
 function toggleMenu(event) {
   menu.value.toggle(event);
 }
+
 </script>

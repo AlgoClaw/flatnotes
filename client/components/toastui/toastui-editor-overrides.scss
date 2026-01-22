@@ -8,7 +8,7 @@
   height: 100%;
 }
 
-.toastui-editor-contents ul > li::before {
+.toastui-editor-contents ul>li::before {
   // Vertically center the bullet point
   margin-top: 0.7rem;
 }
@@ -22,6 +22,7 @@
 
 .toastui-editor-contents,
 .ProseMirror {
+
   h1,
   .toastui-editor-md-heading1,
   h2,
@@ -92,9 +93,14 @@
 // Colours
 .toastui-editor-defaultUI {
   border: none;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 7rem);
+  max-height: calc(100vh - 7rem);
 }
 
 .toastui-editor-contents {
+
   h1,
   h2,
   h3,
@@ -103,9 +109,11 @@
   h6 {
     color: rgb(var(--theme-text));
   }
+
   p {
     color: rgb(var(--theme-text));
   }
+
   pre code {
     color: rgb(var(--theme-text));
   }
@@ -113,10 +121,23 @@
 
 .toastui-editor-main {
   background-color: rgb(var(--theme-background));
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
 }
 
-.toastui-editor-ww-container {
+.toastui-editor-main-container,
+.toastui-editor-ww-container,
+.toastui-editor-md-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   background-color: rgb(var(--theme-background));
+  overflow: auto;
+}
+
+.toastui-editor-md-tab-container {
+  flex-shrink: 0;
 }
 
 .toastui-editor-contents ul,
@@ -255,6 +276,7 @@
   label {
     color: rgb(var(--theme-text));
   }
+
   input {
     background-color: rgb(var(--theme-background));
     border: 1px solid rgb(var(--theme-border));
