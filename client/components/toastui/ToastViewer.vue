@@ -8,6 +8,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import baseOptions from "./baseOptions.js";
 import extendedAutolinks from "./extendedAutolinks.js";
+import preserveBlankLinesForViewer from "./preserveBlankLinesForViewer.js";
 
 const props = defineProps({
   initialValue: String,
@@ -30,7 +31,7 @@ function renderViewer() {
     ...baseOptions,
     extendedAutolinks,
     el: viewerElement.value,
-    initialValue: props.initialValue ?? "",
+    initialValue: preserveBlankLinesForViewer(props.initialValue ?? ""),
   });
 
   nextTick(generateTableOfContents);

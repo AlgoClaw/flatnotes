@@ -1,7 +1,7 @@
 .ProseMirror,
 .toastui-editor-defaultUI .ProseMirror,
 .toastui-editor-md-container .toastui-editor-md-preview {
-  padding: 1rem 0 0 0;
+  padding: 0 0 0 0;
 }
 
 .ProseMirror {
@@ -37,7 +37,7 @@
   .toastui-editor-md-heading6 {
     font-weight: bold;
     line-height: 1.4;
-    margin: 1em 0 0.5em 0;
+    margin: 0 0 0 0;
     padding: 0;
     border-bottom: none;
 
@@ -78,7 +78,7 @@
 
   p {
     line-height: 1.6rem;
-    margin: 0 0 1rem 0;
+    margin: 0 0 0 0;
   }
 }
 
@@ -226,17 +226,25 @@
 }
 
 .toast-viewer.setting-paragraph-spacing .toastui-editor-contents p {
-  margin: 1rem 0 0;
+  margin: 0 0 0;
+}
+
+.toast-viewer .toastui-editor-contents .flatnotes-empty-line {
+  display: block;
+  height: 1.6rem;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
 }
 
 .toast-viewer.setting-bullet-spacing .toastui-editor-contents ul {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0rem;
 }
 
 .toast-viewer.setting-numbered-spacing .toastui-editor-contents ol {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0rem;
 }
 
 .toastui-editor-toolbar-divider {
