@@ -225,6 +225,14 @@
   text-align: justify;
 }
 
+.toast-viewer .toastui-editor-contents hr {
+  border-color: rgb(var(--theme-text-muted));
+}
+
+.dark .toast-viewer .toastui-editor-contents hr {
+  border-color: rgb(var(--theme-border));
+}
+
 .toast-viewer.setting-paragraph-spacing .toastui-editor-contents p {
   margin: 0 0 0;
 }
