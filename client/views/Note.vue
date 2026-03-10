@@ -93,15 +93,10 @@
       <div v-if="!editMode" class="flex flex-col gap-6 lg:flex-row lg:items-start">
         <aside
           v-if="shouldRenderTableOfContents"
-          class="table-of-contents mb-4 rounded border border-theme-border bg-theme-background-elevated px-4 py-3 text-sm text-theme-text shadow-sm lg:sticky lg:top-4 lg:mb-0 lg:w-72 lg:self-start"
+          class="table-of-contents mb-4 overflow-y-auto overscroll-contain rounded border border-theme-border bg-theme-background-elevated px-4 py-3 text-sm text-theme-text shadow-sm lg:sticky lg:top-4 lg:mb-0 lg:self-start"
+          style="max-width: 16rem; max-height: calc(100vh - 2rem)"
         >
-          <div class="text-xs font-semibold uppercase tracking-wide text-theme-text-muted">
-            On this page
-          </div>
-          <nav
-            class="mt-3 flex flex-col text-theme-text"
-            aria-label="Table of contents"
-          >
+          <nav class="flex flex-col text-theme-text" aria-label="Table of contents">
             <a
               v-for="item in tableOfContents"
               :key="item.id"
