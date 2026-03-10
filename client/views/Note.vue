@@ -93,8 +93,9 @@
       <div v-if="!editMode" class="flex flex-col gap-6 lg:flex-row lg:items-start">
         <aside
           v-if="shouldRenderTableOfContents"
+          ref="tableOfContentsElement"
           class="table-of-contents mb-4 overflow-y-auto overscroll-contain rounded border border-theme-border bg-theme-background-elevated px-4 py-3 text-sm text-theme-text shadow-sm lg:sticky lg:top-4 lg:mb-0 lg:self-start"
-          style="max-width: 16rem; max-height: calc(100vh - 2rem)"
+          :style="tableOfContentsStyle"
         >
           <nav class="flex flex-col text-theme-text" aria-label="Table of contents">
             <a
@@ -102,7 +103,7 @@
               :key="item.id"
               class="rounded px-2 py-1 text-sm transition-colors hover:bg-theme-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-brand"
               :href="`${currentNoteLinkBase}#${item.id}`"
-              :style="{ paddingLeft: `${(item.level - 1) * 12}px` }"
+              :style="{ paddingLeft: `${(item.level - topLevelTableOfContentsHeading) * 12}px` }"
             >
               {{ item.text }}
             </a>
@@ -146,7 +147,7 @@ import { mdiNoteOffOutline } from "@mdi/js";
 import { mdilContentSave, mdilDelete } from "@mdi/light-js";
 import Mousetrap from "mousetrap";
 import { useToast } from "primevue/usetoast";
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
 import {
@@ -189,8 +190,11 @@ const reservedFilenameCharacters = /[<>:"/\\|?*]/;
 const router = useRouter();
 const newTitle = ref();
 const toast = useToast();
+const tableOfContentsElement = ref();
+const tableOfContentsMaxHeight = ref("calc(100vh - 2rem)");
 const toastEditor = ref();
 const tableOfContents = ref([]);
+let tableOfContentsHeightAnimationFrame = null;
 const currentNoteLinkBase = computed(() => {
   const fullPath = router.currentRoute.value.fullPath || "/";
   return fullPath.split("#")[0];
@@ -204,6 +208,17 @@ const shouldRenderTableOfContents = computed(
     shouldDisplayTableOfContentsSetting.value &&
     tableOfContents.value.length > 0,
 );
+const topLevelTableOfContentsHeading = computed(() => {
+  if (tableOfContents.value.length === 0) {
+    return 1;
+  }
+
+  return Math.min(...tableOfContents.value.map((item) => item.level));
+});
+const tableOfContentsStyle = computed(() => ({
+  maxWidth: "16rem",
+  maxHeight: tableOfContentsMaxHeight.value,
+}));
 const ctrlSSavesNote = computed(
   () => globalStore.settings.ctrlSSavesNote === true,
 );
@@ -525,6 +540,47 @@ function loadDraft() {
 }
 
 // Table of Contents
+function updateTableOfContentsMaxHeight() {
+  if (!tableOfContentsElement.value || typeof window === "undefined") {
+    tableOfContentsMaxHeight.value = "calc(100vh - 2rem)";
+    return;
+  }
+
+  const viewportBottomPadding = 16;
+  const { top } = tableOfContentsElement.value.getBoundingClientRect();
+  const availableHeight = Math.floor(
+    window.innerHeight - top - viewportBottomPadding,
+  );
+
+  tableOfContentsMaxHeight.value =
+    availableHeight > 0 ? `${availableHeight}px` : "calc(100vh - 2rem)";
+}
+
+function scheduleTableOfContentsMaxHeightUpdate() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (tableOfContentsHeightAnimationFrame !== null) {
+    return;
+  }
+
+  tableOfContentsHeightAnimationFrame = window.requestAnimationFrame(() => {
+    tableOfContentsHeightAnimationFrame = null;
+    updateTableOfContentsMaxHeight();
+  });
+}
+
+function cancelTableOfContentsMaxHeightUpdate() {
+  if (
+    typeof window !== "undefined" &&
+    tableOfContentsHeightAnimationFrame !== null
+  ) {
+    window.cancelAnimationFrame(tableOfContentsHeightAnimationFrame);
+    tableOfContentsHeightAnimationFrame = null;
+  }
+}
+
 function handleTocGenerated(entries = []) {
   tableOfContents.value = entries;
 }
@@ -619,5 +675,29 @@ function isContentChanged() {
 }
 
 watch(() => props.title, init);
-onMounted(init);
+watch(shouldRenderTableOfContents, (shouldRender) => {
+  if (!shouldRender) {
+    tableOfContentsMaxHeight.value = "calc(100vh - 2rem)";
+    return;
+  }
+
+  nextTick(scheduleTableOfContentsMaxHeightUpdate);
+});
+watch(tableOfContents, () => {
+  nextTick(scheduleTableOfContentsMaxHeightUpdate);
+});
+onMounted(() => {
+  init();
+  window.addEventListener("scroll", scheduleTableOfContentsMaxHeightUpdate, {
+    passive: true,
+  });
+  window.addEventListener("resize", scheduleTableOfContentsMaxHeightUpdate, {
+    passive: true,
+  });
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", scheduleTableOfContentsMaxHeightUpdate);
+  window.removeEventListener("resize", scheduleTableOfContentsMaxHeightUpdate);
+  cancelTableOfContentsMaxHeightUpdate();
+});
 </script>
