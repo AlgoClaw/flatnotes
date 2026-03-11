@@ -27,6 +27,104 @@
         </div>
       </div>
 
+      <div>
+        <p class="text-base font-medium text-theme-text">Light Mode Logo</p>
+        <p class="text-sm text-theme-text-muted">
+          Upload an image to replace the square brand mark in light mode. Square images work best.
+        </p>
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div
+            class="flex h-16 w-16 items-center justify-center overflow-hidden rounded border border-theme-border bg-theme-background"
+          >
+            <img
+              v-if="hasCustomLogo"
+              :src="customLogoDataUrl"
+              alt="Custom logo preview"
+              class="h-full w-full object-contain"
+            />
+            <div
+              v-else
+              class="flex h-9 w-9 items-center justify-center rounded bg-theme-brand text-lg font-semibold text-white"
+            >
+              f
+            </div>
+          </div>
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              ref="customLogoInput"
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+              class="hidden"
+              @change="handleLogoSelected($event, 'customLogoDataUrl')"
+            />
+            <CustomButton
+              label="Upload Logo"
+              :disabled="isSaving"
+              @click="openLogoPicker(customLogoInput)"
+            />
+            <CustomButton
+              v-if="hasCustomLogo"
+              label="Reset"
+              style="danger"
+              :disabled="isSaving"
+              @click="resetLogo('customLogoDataUrl')"
+            />
+          </div>
+        </div>
+        <p class="mt-2 text-sm text-theme-text-muted">
+          PNG, JPG, GIF, WEBP, or SVG. Maximum 512 KB.
+        </p>
+      </div>
+
+      <div>
+        <p class="text-base font-medium text-theme-text">Dark Mode Logo</p>
+        <p class="text-sm text-theme-text-muted">
+          Optional image used instead of the light logo when dark mode is enabled.
+        </p>
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div
+            class="flex h-16 w-16 items-center justify-center overflow-hidden rounded border border-theme-border bg-slate-900"
+          >
+            <img
+              v-if="hasCustomDarkLogo"
+              :src="customDarkLogoDataUrl"
+              alt="Dark logo preview"
+              class="h-full w-full object-contain"
+            />
+            <div
+              v-else
+              class="flex h-9 w-9 items-center justify-center rounded bg-theme-brand text-lg font-semibold text-white"
+            >
+              f
+            </div>
+          </div>
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              ref="customDarkLogoInput"
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+              class="hidden"
+              @change="handleLogoSelected($event, 'customDarkLogoDataUrl')"
+            />
+            <CustomButton
+              label="Upload Dark Logo"
+              :disabled="isSaving"
+              @click="openLogoPicker(customDarkLogoInput)"
+            />
+            <CustomButton
+              v-if="hasCustomDarkLogo"
+              label="Reset"
+              style="danger"
+              :disabled="isSaving"
+              @click="resetLogo('customDarkLogoDataUrl')"
+            />
+          </div>
+        </div>
+        <p class="mt-2 text-sm text-theme-text-muted">
+          If no dark logo is uploaded, the light logo is used as fallback.
+        </p>
+      </div>
+
       <div class="flex items-center gap-4">
         <Toggle
           :isOn="hideLogoMarkEnabled"
@@ -243,7 +341,17 @@ import { getToastOptions } from "../helpers.js";
 const globalStore = useGlobalStore();
 const isSaving = ref(false);
 const siteTitleInput = ref(defaultSiteTitle);
+const customLogoInput = ref();
+const customDarkLogoInput = ref();
 const toast = useToast();
+const maxCustomLogoFileSizeBytes = 512 * 1024;
+const acceptedCustomLogoTypes = [
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+];
 
 const displayTableOfContentsEnabled = computed(() => {
   const value = globalStore.settings.displayTableOfContents;
@@ -288,6 +396,16 @@ const bulletListSpacingEnabled = computed(
 const numberedListSpacingEnabled = computed(
   () => globalStore.settings.numberedListSpacing === true,
 );
+const customLogoDataUrl = computed(() => {
+  const value = globalStore.settings.customLogoDataUrl;
+  return typeof value === "string" && value.length > 0 ? value : null;
+});
+const hasCustomLogo = computed(() => customLogoDataUrl.value !== null);
+const customDarkLogoDataUrl = computed(() => {
+  const value = globalStore.settings.customDarkLogoDataUrl;
+  return typeof value === "string" && value.length > 0 ? value : null;
+});
+const hasCustomDarkLogo = computed(() => customDarkLogoDataUrl.value !== null);
 
 const isSiteTitleDirty = computed(() => {
   return (
@@ -374,6 +492,87 @@ function saveSiteTitle() {
     return;
   }
   persistSettings({ siteTitle: normalizeSiteTitle(siteTitleInput.value) });
+}
+
+function openLogoPicker(inputElement) {
+  if (isSaving.value) {
+    return;
+  }
+
+  inputElement?.click?.();
+}
+
+async function handleLogoSelected(event, settingKey) {
+  const input = event.target;
+  const file = input?.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  try {
+    validateCustomLogoFile(file);
+    const dataUrl = await readFileAsDataUrl(file);
+    persistSettings({ [settingKey]: dataUrl });
+  } catch (error) {
+    toast.add(
+      getToastOptions(
+        error instanceof Error ? error.message : "Unable to read logo file.",
+        "Invalid Logo",
+        "error",
+      ),
+    );
+  } finally {
+    if (input) {
+      input.value = "";
+    }
+  }
+}
+
+function resetLogo(settingKey) {
+  const hasValue =
+    settingKey === "customDarkLogoDataUrl"
+      ? hasCustomDarkLogo.value
+      : hasCustomLogo.value;
+
+  if (isSaving.value || !hasValue) {
+    return;
+  }
+
+  persistSettings({ [settingKey]: null });
+}
+
+function validateCustomLogoFile(file) {
+  if (!acceptedCustomLogoTypes.includes(file.type)) {
+    throw new Error(
+      "Please choose a PNG, JPG, GIF, WEBP, or SVG image.",
+    );
+  }
+
+  if (file.size > maxCustomLogoFileSizeBytes) {
+    throw new Error("Logo image must be 512 KB or smaller.");
+  }
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Unable to read logo file."));
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Unable to read logo file."));
+    };
+
+    reader.readAsDataURL(file);
+  });
 }
 
 function normalizeSiteTitle(value) {

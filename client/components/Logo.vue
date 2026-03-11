@@ -1,7 +1,15 @@
 <template>
   <div class="flex items-center">
+    <img
+      v-if="showCustomLogo"
+      :src="activeCustomLogoDataUrl"
+      :alt="siteTitle + ' logo'"
+      width="36"
+      height="36"
+      class="h-9 w-9 rounded object-contain"
+    />
     <svg
-      v-if="showLogoMark"
+      v-else-if="showLogoMark"
       width="36"
       height="36"
       viewBox="0 0 36 36"
@@ -34,8 +42,9 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
+import { defaultSiteTitle } from "../constants.js";
 import { useGlobalStore } from "../globalStore.js";
 
 const props = defineProps({
@@ -46,8 +55,63 @@ const props = defineProps({
 });
 
 const globalStore = useGlobalStore();
+const isDarkTheme = ref(false);
+let themeObserver = null;
+
+const lightCustomLogoDataUrl = computed(() => {
+  const value = globalStore.settings.customLogoDataUrl;
+  return typeof value === "string" && value.length > 0 ? value : null;
+});
+const darkCustomLogoDataUrl = computed(() => {
+  const value = globalStore.settings.customDarkLogoDataUrl;
+  return typeof value === "string" && value.length > 0 ? value : null;
+});
 const showLogoMark = computed(() => globalStore.settings.hideLogoMark !== true);
 const showLogoWordmark = computed(
   () => globalStore.settings.hideLogoWordmark !== true,
 );
+const activeCustomLogoDataUrl = computed(() => {
+  if (isDarkTheme.value) {
+    return darkCustomLogoDataUrl.value ?? lightCustomLogoDataUrl.value;
+  }
+
+  return lightCustomLogoDataUrl.value;
+});
+const showCustomLogo = computed(
+  () => showLogoMark.value && activeCustomLogoDataUrl.value !== null,
+);
+const siteTitle = computed(() => {
+  const value = globalStore.settings.siteTitle;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : defaultSiteTitle;
+});
+
+function syncDarkTheme() {
+  if (typeof document === "undefined") {
+    isDarkTheme.value = false;
+    return;
+  }
+
+  isDarkTheme.value = document.body.classList.contains("dark");
+}
+
+onMounted(() => {
+  syncDarkTheme();
+
+  if (typeof MutationObserver === "undefined" || typeof document === "undefined") {
+    return;
+  }
+
+  themeObserver = new MutationObserver(syncDarkTheme);
+  themeObserver.observe(document.body, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+});
+
+onBeforeUnmount(() => {
+  themeObserver?.disconnect();
+  themeObserver = null;
+});
 </script>

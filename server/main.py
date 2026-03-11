@@ -224,7 +224,7 @@ def put_settings(data: SettingsUpdateModel):
     updates = {
         key: value
         for key, value in data.model_dump(by_alias=False).items()
-        if value is not None
+        if key in data.model_fields_set
     }
     if not updates:
         return settings_manager.load()

@@ -1,14 +1,40 @@
 import json
 import os
+import re
 from typing import Any, Dict, Optional
 
 from fastapi import HTTPException
+from pydantic.functional_validators import AfterValidator
+from typing_extensions import Annotated
 
 from helpers import CustomBaseModel
 from logger import logger
 
 SETTINGS_DIR = "/config"
 SETTINGS_FILE = os.path.join(SETTINGS_DIR, "settings.json")
+MAX_CUSTOM_LOGO_DATA_URL_LENGTH = 1_000_000
+IMAGE_DATA_URL_PATTERN = re.compile(
+    r"^data:image/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$"
+)
+
+
+def validate_custom_logo_data_url(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if cleaned == "":
+        return None
+    if len(cleaned) > MAX_CUSTOM_LOGO_DATA_URL_LENGTH:
+        raise ValueError("customLogoDataUrl is too large.")
+    if not IMAGE_DATA_URL_PATTERN.match(cleaned):
+        raise ValueError("customLogoDataUrl must be a valid base64 image data URL.")
+    return cleaned
+
+
+CustomLogoDataUrl = Annotated[
+    Optional[str],
+    AfterValidator(validate_custom_logo_data_url),
+]
 
 
 class SettingsModel(CustomBaseModel):
@@ -19,6 +45,8 @@ class SettingsModel(CustomBaseModel):
     wide_layout: bool = False
     hide_logo_mark: bool = False
     hide_logo_wordmark: bool = False
+    custom_logo_data_url: CustomLogoDataUrl = None
+    custom_dark_logo_data_url: CustomLogoDataUrl = None
     hide_site_icon: bool = False
     compact_search_results: bool = False
     hide_search_tags: bool = False
@@ -36,6 +64,8 @@ class SettingsUpdateModel(CustomBaseModel):
     wide_layout: Optional[bool] = None
     hide_logo_mark: Optional[bool] = None
     hide_logo_wordmark: Optional[bool] = None
+    custom_logo_data_url: CustomLogoDataUrl = None
+    custom_dark_logo_data_url: CustomLogoDataUrl = None
     hide_site_icon: Optional[bool] = None
     compact_search_results: Optional[bool] = None
     hide_search_tags: Optional[bool] = None

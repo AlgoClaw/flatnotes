@@ -72,6 +72,8 @@ const defaultSettings = {
   wideLayout: false,
   hideLogoMark: false,
   hideLogoWordmark: false,
+  customLogoDataUrl: null,
+  customDarkLogoDataUrl: null,
   hideSiteIcon: false,
   compactSearchResults: false,
   hideSearchTags: false,
