@@ -8,6 +8,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import baseOptions from "./baseOptions.js";
 import extendedAutolinks from "./extendedAutolinks.js";
+import { syncOrderedListStartStyles } from "./orderedListStartFix.js";
 import preserveBlankLinesForViewer from "./preserveBlankLinesForViewer.js";
 
 const props = defineProps({
@@ -34,7 +35,10 @@ function renderViewer() {
     initialValue: preserveBlankLinesForViewer(props.initialValue ?? ""),
   });
 
-  nextTick(generateTableOfContents);
+  nextTick(() => {
+    syncOrderedListStartStyles(viewerElement.value);
+    generateTableOfContents();
+  });
 }
 
 function destroyViewer() {
