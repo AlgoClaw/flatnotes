@@ -11,7 +11,13 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: () => import("./views/Home.vue"),
+      redirect: {
+        name: "search",
+        query: {
+          [constants.params.searchTerm]: "*",
+          [constants.params.sortBy]: String(constants.searchSortOptions.lastModified),
+        },
+      },
     },
     {
       path: "/login",
