@@ -83,14 +83,6 @@
           class="ml-1"
           @click="toggleEditModeHandler"
         />
-        <CustomButton
-          v-if="canModify && !isNewNote"
-          class="ml-1"
-          label="Menu"
-          :iconPath="mdilMenu"
-          @click="toggleNoteMenu"
-        />
-        <PrimeMenu ref="noteMenu" :model="noteMenuItems" :popup="true" />
       </div>
     </div>
 
@@ -151,7 +143,7 @@
 
 <script setup>
 import { mdiDownload, mdiNoteOffOutline } from "@mdi/js";
-import { mdilContentSave, mdilDelete, mdilMenu } from "@mdi/light-js";
+import { mdilContentSave } from "@mdi/light-js";
 import Mousetrap from "mousetrap";
 import { useToast } from "primevue/usetoast";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -169,7 +161,6 @@ import { Note } from "../classes.js";
 import ConfirmModal from "../components/ConfirmModal.vue";
 import CustomButton from "../components/CustomButton.vue";
 import LoadingIndicator from "../components/LoadingIndicator.vue";
-import PrimeMenu from "../components/PrimeMenu.vue";
 import Toggle from "../components/Toggle.vue";
 import ToastEditor from "../components/toastui/ToastEditor.vue";
 import ToastViewer from "../components/toastui/ToastViewer.vue";
@@ -194,7 +185,6 @@ const isDraftModalVisible = ref(false);
 const isNewNote = computed(() => !props.title);
 const loadingIndicator = ref();
 const note = ref({});
-const noteMenu = ref();
 const reservedFilenameCharacters = /[<>:"/\\|?*]/;
 const router = useRouter();
 const newTitle = ref();
@@ -252,18 +242,7 @@ const toastViewerClasses = computed(() => {
   if (numberedListSpacing.value) classes.push("setting-numbered-spacing");
   return classes;
 });
-const noteMenuItems = computed(() => [
-  {
-    label: "Delete",
-    icon: mdilDelete,
-    command: deleteHandler,
-  },
-]);
 const unsavedChanges = ref(false);
-
-function toggleNoteMenu(event) {
-  noteMenu.value?.toggle(event);
-}
 
 function downloadNote() {
   if (typeof window === "undefined" || typeof document === "undefined") {
@@ -355,6 +334,14 @@ function getInitialEditorValue() {
 // Note Deletion
 function deleteHandler() {
   isDeleteModalVisible.value = true;
+}
+
+function handleDeleteCurrentNoteRequest() {
+  if (!canModify.value || isNewNote.value) {
+    return;
+  }
+
+  deleteHandler();
 }
 
 function deleteConfirmedHandler() {
@@ -728,10 +715,18 @@ onMounted(() => {
   window.addEventListener("resize", scheduleTableOfContentsMaxHeightUpdate, {
     passive: true,
   });
+  window.addEventListener(
+    "flatnotes:delete-current-note",
+    handleDeleteCurrentNoteRequest,
+  );
 });
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", scheduleTableOfContentsMaxHeightUpdate);
   window.removeEventListener("resize", scheduleTableOfContentsMaxHeightUpdate);
+  window.removeEventListener(
+    "flatnotes:delete-current-note",
+    handleDeleteCurrentNoteRequest,
+  );
   cancelTableOfContentsMaxHeightUpdate();
 });
 </script>

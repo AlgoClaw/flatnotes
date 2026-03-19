@@ -22,6 +22,7 @@
 
 <script setup>
 import {
+  mdilDelete,
   mdilLogout,
   mdilMagnify,
   mdilMenu,
@@ -31,7 +32,7 @@ import {
   mdilSettings,
 } from "@mdi/light-js";
 import { computed, ref } from "vue";
-import { RouterLink, useRouter } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 
 import CustomButton from "../components/CustomButton.vue";
 import Logo from "../components/Logo.vue";
@@ -43,6 +44,7 @@ import { clearStoredToken } from "../tokenStorage.js";
 
 const globalStore = useGlobalStore();
 const menu = ref();
+const route = useRoute();
 const router = useRouter();
 const compactHeader = computed(() => globalStore.settings.compactHeader === true);
 
@@ -57,6 +59,13 @@ const settingsDisabled = computed(
 );
 const showLogOutButton = computed(
   () => ![authTypes.none, authTypes.readOnly].includes(globalStore.config.authType),
+);
+const canDeleteCurrentNote = computed(
+  () =>
+    globalStore.config.authType !== authTypes.readOnly &&
+    route.name === "note" &&
+    typeof route.params.title === "string" &&
+    route.params.title.length > 0,
 );
 
 const menuItems = computed(() => [
@@ -89,6 +98,17 @@ const menuItems = computed(() => [
     to: { name: "settings" },
     disabled: settingsDisabled.value,
   },
+  ...(canDeleteCurrentNote.value
+    ? [
+        {
+          label: "Delete",
+          icon: mdilDelete,
+          command: () => {
+            window.dispatchEvent(new CustomEvent("flatnotes:delete-current-note"));
+          },
+        },
+      ]
+    : []),
   {
     separator: true,
     visible: showLogOutButton.value,
