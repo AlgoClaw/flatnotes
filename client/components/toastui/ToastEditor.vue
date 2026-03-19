@@ -26,6 +26,7 @@ const initialMarkdown = props.initialValue ?? "";
 let hasUserEditedContent = false;
 let lastUserInteractionAt = 0;
 let orderedListSyncAnimationFrame = null;
+let isRestoringOriginalMarkdown = false;
 
 function swallowEvent(event) {
   event.preventDefault();
@@ -40,8 +41,35 @@ function noteUserInteraction() {
 }
 
 function markContentEditedIfNeeded() {
+  if (isRestoringOriginalMarkdown) {
+    return;
+  }
+
   if (Date.now() - lastUserInteractionAt < 1000) {
     hasUserEditedContent = true;
+  }
+}
+
+function restoreOriginalMarkdownIfNeeded() {
+  if (
+    isRestoringOriginalMarkdown ||
+    hasUserEditedContent ||
+    !toastEditor?.isMarkdownMode?.()
+  ) {
+    return;
+  }
+
+  const currentMarkdown = toastEditor.getMarkdown();
+  if (currentMarkdown === initialMarkdown) {
+    return;
+  }
+
+  isRestoringOriginalMarkdown = true;
+
+  try {
+    toastEditor.setMarkdown(initialMarkdown, false);
+  } finally {
+    isRestoringOriginalMarkdown = false;
   }
 }
 
@@ -215,7 +243,10 @@ onMounted(() => {
       : {},
   });
 
-  toastEditor.on("changeMode", scheduleOrderedListStartSync);
+  toastEditor.on("changeMode", () => {
+    restoreOriginalMarkdownIfNeeded();
+    scheduleOrderedListStartSync();
+  });
 
   addInteractionTracking();
   scheduleOrderedListStartSync();
