@@ -54,12 +54,12 @@
 
       <!-- Buttons -->
       <div class="flex shrink-0 self-end md:self-baseline print:hidden">
-        <!-- Delete Button -->
         <CustomButton
-          v-show="canModify && !isNewNote"
-          label="Delete"
-          :iconPath="mdilDelete"
-          @click="deleteHandler"
+          v-if="!isNewNote"
+          class="ml-1"
+          label="Download"
+          :iconPath="mdiDownload"
+          @click="downloadNote"
         />
         <!-- Save Button -->
         <CustomButton
@@ -83,6 +83,14 @@
           class="ml-1"
           @click="toggleEditModeHandler"
         />
+        <CustomButton
+          v-if="canModify && !isNewNote"
+          class="ml-1"
+          label="Menu"
+          :iconPath="mdilMenu"
+          @click="toggleNoteMenu"
+        />
+        <PrimeMenu ref="noteMenu" :model="noteMenuItems" :popup="true" />
       </div>
     </div>
 
@@ -123,7 +131,6 @@
         v-else
         ref="toastEditor"
         :initialValue="getInitialEditorValue()"
-        :initialEditType="loadDefaultEditorMode()"
         :addImageBlobHook="addImageBlobHook"
         @change="startContentChangedTimeout"
         @keydown.capture="keydownHandler"
@@ -143,8 +150,8 @@
 </style>
 
 <script setup>
-import { mdiNoteOffOutline } from "@mdi/js";
-import { mdilContentSave, mdilDelete } from "@mdi/light-js";
+import { mdiDownload, mdiNoteOffOutline } from "@mdi/js";
+import { mdilContentSave, mdilDelete, mdilMenu } from "@mdi/light-js";
 import Mousetrap from "mousetrap";
 import { useToast } from "primevue/usetoast";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -162,6 +169,7 @@ import { Note } from "../classes.js";
 import ConfirmModal from "../components/ConfirmModal.vue";
 import CustomButton from "../components/CustomButton.vue";
 import LoadingIndicator from "../components/LoadingIndicator.vue";
+import PrimeMenu from "../components/PrimeMenu.vue";
 import Toggle from "../components/Toggle.vue";
 import ToastEditor from "../components/toastui/ToastEditor.vue";
 import ToastViewer from "../components/toastui/ToastViewer.vue";
@@ -186,6 +194,7 @@ const isDraftModalVisible = ref(false);
 const isNewNote = computed(() => !props.title);
 const loadingIndicator = ref();
 const note = ref({});
+const noteMenu = ref();
 const reservedFilenameCharacters = /[<>:"/\\|?*]/;
 const router = useRouter();
 const newTitle = ref();
@@ -243,7 +252,41 @@ const toastViewerClasses = computed(() => {
   if (numberedListSpacing.value) classes.push("setting-numbered-spacing");
   return classes;
 });
+const noteMenuItems = computed(() => [
+  {
+    label: "Delete",
+    icon: mdilDelete,
+    command: deleteHandler,
+  },
+]);
 const unsavedChanges = ref(false);
+
+function toggleNoteMenu(event) {
+  noteMenu.value?.toggle(event);
+}
+
+function downloadNote() {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return;
+  }
+
+  const content = editMode.value
+    ? (toastEditor.value?.getMarkdown?.() ?? note.value.content ?? "")
+    : (note.value.content ?? "");
+  const title = note.value.title?.trim() || "note";
+  const filename = `${title.replace(/[<>:"/\\|?*]/g, "_")}.md`;
+  const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
 
 function init() {
   // Return if we already have the note e.g. When we rename a note, the route prop would change but we’d already have the note.
@@ -655,16 +698,7 @@ function setBeforeUnloadConfirmation(enable = true) {
 }
 
 function saveDefaultEditorMode() {
-  const isWysiwygMode = toastEditor.value.isWysiwygMode();
-  localStorage.setItem(
-    "defaultEditorMode",
-    isWysiwygMode ? "wysiwyg" : "markdown",
-  );
-}
-
-function loadDefaultEditorMode() {
-  const defaultWysiwygMode = localStorage.getItem("defaultEditorMode");
-  return defaultWysiwygMode || "markdown";
+  localStorage.setItem("defaultEditorMode", "markdown");
 }
 
 function isContentChanged() {

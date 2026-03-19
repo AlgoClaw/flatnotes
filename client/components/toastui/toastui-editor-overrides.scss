@@ -199,6 +199,7 @@
 .toastui-editor-mode-switch {
   background-color: rgb(var(--theme-background));
   border-color: rgb(var(--theme-border));
+  display: none !important;
 }
 
 .toastui-editor-defaultUI-toolbar button {

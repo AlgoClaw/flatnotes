@@ -11,10 +11,6 @@ import { syncOrderedListStartStyles } from "./orderedListStartFix.js";
 
 const props = defineProps({
   initialValue: String,
-  initialEditType: {
-    type: String,
-    default: "markdown",
-  },
   addImageBlobHook: Function,
 });
 
@@ -23,6 +19,7 @@ const emit = defineEmits(["change", "keydown"]);
 const editorElement = ref();
 let toastEditor;
 const initialMarkdown = props.initialValue ?? "";
+const initialEditType = "markdown";
 let hasUserEditedContent = false;
 let lastUserInteractionAt = 0;
 let orderedListSyncAnimationFrame = null;
@@ -226,8 +223,9 @@ onMounted(() => {
   toastEditor = new Editor({
     ...baseOptions,
     el: editorElement.value,
+    hideModeSwitch: true,
     initialValue: initialMarkdown,
-    initialEditType: props.initialEditType,
+    initialEditType,
     events: {
       change: () => {
         markContentEditedIfNeeded();
@@ -261,11 +259,7 @@ function getMarkdown() {
   return hasUserEditedContent ? toastEditor.getMarkdown() : initialMarkdown;
 }
 
-function isWysiwygMode() {
-  return toastEditor.isWysiwygMode();
-}
-
-defineExpose({ getMarkdown, isWysiwygMode });
+defineExpose({ getMarkdown });
 </script>
 
 <style>
