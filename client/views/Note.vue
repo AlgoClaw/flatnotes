@@ -173,12 +173,12 @@ const props = defineProps({
   title: String,
 });
 
+const globalStore = useGlobalStore();
 const canModify = computed(
   () => globalStore.config.authType != authTypes.readOnly,
 );
 let contentChangedTimeout = null;
 const editMode = ref(false);
-const globalStore = useGlobalStore();
 const isSaveChangesModalVisible = ref(false);
 const isDeleteModalVisible = ref(false);
 const isDraftModalVisible = ref(false);
