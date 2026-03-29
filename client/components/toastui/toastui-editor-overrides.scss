@@ -158,6 +158,41 @@
   background-color: rgb(var(--theme-background-elevated));
 }
 
+.toastui-editor-contents pre.flatnotes-copyable-code-block {
+  position: relative;
+}
+
+.toastui-editor-contents pre .flatnotes-copy-code-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  border: 1px solid rgb(var(--theme-border));
+  border-radius: 0.375rem;
+  background-color: rgb(var(--theme-background));
+  color: rgb(var(--theme-text-muted));
+  font-family: "Poppins", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.4rem 0.6rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.toastui-editor-contents pre.flatnotes-copyable-code-block:hover .flatnotes-copy-code-button,
+.toastui-editor-contents pre.flatnotes-copyable-code-block:focus-within .flatnotes-copy-code-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toastui-editor-contents pre .flatnotes-copy-code-button:hover,
+.toastui-editor-contents pre .flatnotes-copy-code-button:focus-visible {
+  background-color: rgb(var(--theme-background-elevated));
+  color: rgb(var(--theme-text));
+}
+
 .token.operator,
 .token.entity,
 .token.url,

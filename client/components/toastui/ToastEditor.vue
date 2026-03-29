@@ -7,6 +7,7 @@ import Editor from "@toast-ui/editor";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 
 import baseOptions from "./baseOptions.js";
+import { syncCodeBlockCopyButtons } from "./codeBlockCopyButtons.js";
 import { syncOrderedListStartStyles } from "./orderedListStartFix.js";
 
 const props = defineProps({
@@ -23,6 +24,7 @@ const initialEditType = "markdown";
 let hasUserEditedContent = false;
 let lastUserInteractionAt = 0;
 let orderedListSyncAnimationFrame = null;
+let codeBlockCopyAnimationFrame = null;
 let isRestoringOriginalMarkdown = false;
 
 function swallowEvent(event) {
@@ -97,6 +99,33 @@ function cancelOrderedListStartSync() {
   ) {
     window.cancelAnimationFrame(orderedListSyncAnimationFrame);
     orderedListSyncAnimationFrame = null;
+  }
+}
+
+function syncCodeBlockButtons() {
+  syncCodeBlockCopyButtons(editorElement.value);
+}
+
+function scheduleCodeBlockButtonSync() {
+  if (typeof window === "undefined") {
+    syncCodeBlockButtons();
+    return;
+  }
+
+  if (codeBlockCopyAnimationFrame !== null) {
+    return;
+  }
+
+  codeBlockCopyAnimationFrame = window.requestAnimationFrame(() => {
+    codeBlockCopyAnimationFrame = null;
+    syncCodeBlockButtons();
+  });
+}
+
+function cancelCodeBlockButtonSync() {
+  if (typeof window !== "undefined" && codeBlockCopyAnimationFrame !== null) {
+    window.cancelAnimationFrame(codeBlockCopyAnimationFrame);
+    codeBlockCopyAnimationFrame = null;
   }
 }
 
@@ -230,6 +259,7 @@ onMounted(() => {
       change: () => {
         markContentEditedIfNeeded();
         scheduleOrderedListStartSync();
+        scheduleCodeBlockButtonSync();
         emit("change");
       },
       keydown: (_, event) => {
@@ -244,15 +274,18 @@ onMounted(() => {
   toastEditor.on("changeMode", () => {
     restoreOriginalMarkdownIfNeeded();
     scheduleOrderedListStartSync();
+    scheduleCodeBlockButtonSync();
   });
 
   addInteractionTracking();
   scheduleOrderedListStartSync();
+  scheduleCodeBlockButtonSync();
 });
 
 onBeforeUnmount(() => {
   removeInteractionTracking();
   cancelOrderedListStartSync();
+  cancelCodeBlockButtonSync();
 });
 
 function getMarkdown() {

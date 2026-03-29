@@ -7,6 +7,7 @@ import Viewer from "@toast-ui/editor/dist/toastui-editor-viewer";
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import baseOptions from "./baseOptions.js";
+import { syncCodeBlockCopyButtons } from "./codeBlockCopyButtons.js";
 import extendedAutolinks from "./extendedAutolinks.js";
 import { syncOrderedListStartStyles } from "./orderedListStartFix.js";
 import preserveBlankLinesForViewer from "./preserveBlankLinesForViewer.js";
@@ -37,6 +38,7 @@ function renderViewer() {
 
   nextTick(() => {
     syncOrderedListStartStyles(viewerElement.value);
+    syncCodeBlockCopyButtons(viewerElement.value);
     generateTableOfContents();
   });
 }
