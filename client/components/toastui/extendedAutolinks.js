@@ -1,6 +1,17 @@
 import { params, searchSortOptions } from "../../constants.js";
 
-import router from "../../router.js";
+function buildNoteHref(title) {
+  return `/note/${encodeURIComponent(title)}`;
+}
+
+function buildSearchHref(tag) {
+  const query = new URLSearchParams({
+    [params.searchTerm]: tag,
+    [params.sortBy]: String(searchSortOptions.title),
+  });
+
+  return `/search?${query.toString()}`;
+}
 
 /*
  * Sourced from toast-ui. Their autolink options are
@@ -83,7 +94,7 @@ function parseWikiLink(source) {
       return {
         text,
         range: [match.index, match.index + match[0].length - 1],
-        url: `${router.resolve({ name: "note", params: { title: text.trim() } }).href}`,
+        url: buildNoteHref(text.trim()),
       };
     });
   }
@@ -102,15 +113,7 @@ function parseTagLink(source) {
           match.index + match[0].indexOf(text),
           match.index + match[0].indexOf(text) + text.length - 1,
         ],
-        url: `${
-          router.resolve({
-            name: "search",
-            query: {
-              [params.searchTerm]: text,
-              [params.sortBy]: searchSortOptions.title,
-            },
-          }).href
-        }`,
+        url: buildSearchHref(text),
       };
     });
   }

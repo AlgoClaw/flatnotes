@@ -1,5 +1,3 @@
-import router from "./router.js";
-
 class Note {
   constructor(note) {
     this.title = note?.title;

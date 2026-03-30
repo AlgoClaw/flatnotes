@@ -21,7 +21,7 @@ import Mousetrap from "mousetrap";
 import "mousetrap/plugins/global-bind/mousetrap-global-bind";
 import { useToast } from "primevue/usetoast";
 import { computed, ref, watch } from "vue";
-import { RouterView, useRoute } from "vue-router";
+import { RouterView, useRoute, useRouter } from "vue-router";
 
 import { apiErrorHandler, getConfig, getSettings } from "./api.js";
 import PrimeToast from "./components/PrimeToast.vue";
@@ -31,13 +31,13 @@ import { loadTheme } from "./helpers.js";
 import NavBar from "./partials/NavBar.vue";
 import SearchModal from "./partials/SearchModal.vue";
 import LoadingIndicator from "./components/LoadingIndicator.vue";
-import router from "./router.js";
 
 const globalStore = useGlobalStore();
 const isSearchModalVisible = ref(false);
 const loadingIndicator = ref();
 const navBar = ref();
 const route = useRoute();
+const router = useRouter();
 const toast = useToast();
 
 // '/' to search

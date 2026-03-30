@@ -1,5 +1,12 @@
 import codeSyntaxHighlight from "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js";
-import router from "../../router.js";
+
+function getCurrentPageHref(hash) {
+  if (typeof window === "undefined") {
+    return hash;
+  }
+
+  return `${window.location.pathname}${window.location.search}${hash}`;
+}
 
 const customHTMLRenderer = {
   // Add id attribute to headings
@@ -22,11 +29,7 @@ const customHTMLRenderer = {
     if (entering) {
       const href = original.attributes.href;
       if (href.startsWith("#")) {
-        const targetRoute = {
-          ...router.currentRoute.value,
-          hash: href,
-        };
-        original.attributes.href = router.resolve(targetRoute).href;
+        original.attributes.href = getCurrentPageHref(href);
       }
     }
     return original;

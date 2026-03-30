@@ -18,7 +18,7 @@
     confirmButtonStyle="success"
     rejectButtonText="Discard"
     rejectButtonStyle="danger"
-    @confirm="saveHandler((close = true))"
+    @confirm="saveHandler(true)"
     @reject="closeNote"
   />
 
@@ -66,7 +66,7 @@
           v-show="editMode"
           label="Save"
           :iconPath="mdilContentSave"
-          @click="saveHandler((close = false))"
+          @click="saveHandler(false)"
           class="relative ml-1"
         >
           <!-- Unsaved Changes Indicator -->
@@ -639,13 +639,13 @@ function keydownHandler(event) {
   if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === "s") {
     if (ctrlSSavesNote.value) {
       swallowEvent(event);
-      saveHandler((close = false));
+      saveHandler(false);
       return;
     }
   }
   // Ctrl + Enter to save
   if ((event.ctrlKey || event.metaKey) && event.key == "Enter") {
-    saveHandler((close = false));
+    saveHandler(false);
   }
   // Escape to exit edit mode
   if (event.key == "Escape") {

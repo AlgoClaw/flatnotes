@@ -5,7 +5,19 @@ import { Note, SearchResult } from "./classes.js";
 import axios from "axios";
 import { getStoredToken } from "./tokenStorage.js";
 import { getToastOptions } from "./helpers.js";
-import router from "./router.js";
+
+function redirectToLogin() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const redirectPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const query = new URLSearchParams({
+    [constants.params.redirect]: redirectPath,
+  });
+
+  window.location.assign(`/login?${query.toString()}`);
+}
 
 const api = axios.create();
 
@@ -27,11 +39,7 @@ api.interceptors.request.use(
 
 export function apiErrorHandler(error, toast) {
   if (error.response?.status === 401) {
-    const redirectPath = router.currentRoute.value.fullPath;
-    router.push({
-      name: "login",
-      query: { [constants.params.redirect]: redirectPath },
-    });
+    redirectToLogin();
   } else {
     console.error(error);
     toast.add(
