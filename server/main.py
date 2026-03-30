@@ -1,3 +1,4 @@
+import os
 from typing import List, Literal
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, UploadFile
@@ -198,6 +199,16 @@ def get_config():
         quick_access_sort=global_config.quick_access_sort,
         quick_access_limit=global_config.quick_access_limit,
     )
+
+
+@router.get("/api/version")
+def get_version():
+    """Return build metadata for the running container."""
+    return {
+        "buildCommit": os.environ.get("FLATNOTES_BUILD_COMMIT", "unknown"),
+        "buildBranch": os.environ.get("FLATNOTES_BUILD_BRANCH", "unknown"),
+        "buildTime": os.environ.get("FLATNOTES_BUILD_TIME", "unknown"),
+    }
 
 
 # endregion
