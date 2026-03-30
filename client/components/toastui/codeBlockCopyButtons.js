@@ -3,7 +3,9 @@ function getCodeBlocks(rootElement) {
         return [];
     }
 
-    return Array.from(rootElement.querySelectorAll('pre[class*="lang-"]'));
+    return Array.from(rootElement.querySelectorAll("pre")).filter((preElement) =>
+        preElement.querySelector("code"),
+    );
 }
 
 function getCodeText(preElement) {
