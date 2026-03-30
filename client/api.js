@@ -70,6 +70,15 @@ export async function getSettings() {
   }
 }
 
+export async function getVersion() {
+  try {
+    const response = await api.get("api/version");
+    return response.data;
+  } catch (response) {
+    return Promise.reject(response);
+  }
+}
+
 export async function updateSettings(settings) {
   try {
     const response = await api.put("api/settings", settings);

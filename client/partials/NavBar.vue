@@ -60,6 +60,12 @@ const settingsDisabled = computed(
 const showLogOutButton = computed(
   () => ![authTypes.none, authTypes.readOnly].includes(globalStore.config.authType),
 );
+const buildCommit = computed(() => {
+  const value = globalStore.version?.buildCommit;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : "unknown";
+});
 const canDeleteCurrentNote = computed(
   () =>
     globalStore.config.authType !== authTypes.readOnly &&
@@ -118,6 +124,13 @@ const menuItems = computed(() => [
     icon: mdilLogout,
     command: logOut,
     visible: showLogOutButton.value,
+  },
+  {
+    separator: true,
+  },
+  {
+    label: `buildCommit: ${buildCommit.value}`,
+    disabled: true,
   },
 ]);
 

@@ -23,7 +23,7 @@ import { useToast } from "primevue/usetoast";
 import { computed, ref, watch } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 
-import { apiErrorHandler, getConfig, getSettings } from "./api.js";
+import { apiErrorHandler, getConfig, getSettings, getVersion } from "./api.js";
 import PrimeToast from "./components/PrimeToast.vue";
 import { authTypes, defaultSiteTitle } from "./constants.js";
 import { useGlobalStore } from "./globalStore.js";
@@ -89,13 +89,22 @@ Promise.all([
     console.error("Failed to load settings. Using defaults.", error);
     return {};
   }),
+  getVersion().catch((error) => {
+    console.error("Failed to load build version. Using defaults.", error);
+    return {
+      buildCommit: "unknown",
+      buildBranch: "unknown",
+      buildTime: "unknown",
+    };
+  }),
 ])
-  .then(([configData, settingsData]) => {
+  .then(([configData, settingsData, versionData]) => {
     globalStore.config = configData;
     globalStore.settings = {
       ...defaultSettings,
       ...settingsData,
     };
+    globalStore.version = versionData;
     loadingIndicator.value.setLoaded();
     updateDocumentTitle();
   })
