@@ -121,22 +121,49 @@ function isFenceLine(line) {
   return /^\s*(```|~~~)/.test(line);
 }
 
+function isDisplayMathFenceLine(line) {
+  return line.trim() === "$$";
+}
+
 export function renderMathInMarkdown(markdown = "") {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const renderedLines = [];
   let inFence = false;
+  let displayMathLines = null;
 
-  return lines
-    .map((line) => {
-      if (isFenceLine(line)) {
-        inFence = !inFence;
-        return line;
+  lines.forEach((line) => {
+    if (isFenceLine(line) && displayMathLines === null) {
+      inFence = !inFence;
+      renderedLines.push(line);
+      return;
+    }
+
+    if (!inFence && isDisplayMathFenceLine(line)) {
+      if (displayMathLines === null) {
+        displayMathLines = [];
+      } else {
+        renderedLines.push(renderFormula(displayMathLines.join("\n"), true));
+        displayMathLines = null;
       }
+      return;
+    }
 
-      if (inFence || !line.includes("$")) {
-        return line;
-      }
+    if (displayMathLines !== null) {
+      displayMathLines.push(line);
+      return;
+    }
 
-      return replaceMathText(line);
-    })
-    .join("\n");
+    if (inFence || !line.includes("$")) {
+      renderedLines.push(line);
+      return;
+    }
+
+    renderedLines.push(replaceMathText(line));
+  });
+
+  if (displayMathLines !== null) {
+    renderedLines.push("$$", ...displayMathLines);
+  }
+
+  return renderedLines.join("\n");
 }

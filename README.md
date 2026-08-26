@@ -7,6 +7,7 @@ Reader Enhancements
 -------------------
 
 * **Auto-generated Table of Contents** for note viewer pages, with sticky navigation, slugged heading anchors, and a user setting to hide/show the TOC globally.
+* **Math formula rendering** for `$...$` inline formulas and `$$...$$` display formulas using KaTeX, while leaving fenced code blocks untouched.
 * **Toast Viewer Options** exposed via settings:
   * Ctrl + S behaviour (save vs. strikethrough).
   * Text justification.
@@ -40,3 +41,4 @@ Developer Notes
 * `server/settings_manager.py` reads/writes `/config/settings.json` (JSON, not CommonJS). On start it auto-creates the file with defaults.
 * Settings API now exposes `GET /api/settings` and `PUT /api/settings`, the latter accepting partial payloads.
 * Front-end state lives in Pinia (`globalStore.settings`) and is bootstrapped alongside the existing `/api/config` call.
+* Markdown viewer content is preprocessed through `client/components/toastui/mathRenderer.js` before Toast UI parses it, so formulas render consistently in note view mode.
