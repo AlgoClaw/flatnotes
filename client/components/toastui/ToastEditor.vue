@@ -299,5 +299,6 @@ defineExpose({ getMarkdown });
 @import "@toast-ui/editor/dist/toastui-editor.css";
 @import "prismjs/themes/prism.css";
 @import "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css";
+@import "katex/dist/katex.css";
 @import "./toastui-editor-overrides.scss";
 </style>

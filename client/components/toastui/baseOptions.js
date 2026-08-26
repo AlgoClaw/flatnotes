@@ -1,5 +1,7 @@
 import codeSyntaxHighlight from "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js";
 
+import { renderMathText } from "./mathRenderer.js";
+
 function getCurrentPageHref(hash) {
   if (typeof window === "undefined") {
     return hash;
@@ -9,6 +11,7 @@ function getCurrentPageHref(hash) {
 }
 
 const customHTMLRenderer = {
+  text: renderMathText,
   // Add id attribute to headings
   heading(node, { entering, getChildrenText, origin }) {
     const original = origin();
